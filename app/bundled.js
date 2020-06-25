@@ -1,6 +1,50 @@
 /******/ (function(modules) { // webpackBootstrap
+/******/ 	// install a JSONP callback for chunk loading
+/******/ 	function webpackJsonpCallback(data) {
+/******/ 		var chunkIds = data[0];
+/******/ 		var moreModules = data[1];
+/******/
+/******/
+/******/ 		// add "moreModules" to the modules object,
+/******/ 		// then flag all "chunkIds" as loaded and fire callback
+/******/ 		var moduleId, chunkId, i = 0, resolves = [];
+/******/ 		for(;i < chunkIds.length; i++) {
+/******/ 			chunkId = chunkIds[i];
+/******/ 			if(Object.prototype.hasOwnProperty.call(installedChunks, chunkId) && installedChunks[chunkId]) {
+/******/ 				resolves.push(installedChunks[chunkId][0]);
+/******/ 			}
+/******/ 			installedChunks[chunkId] = 0;
+/******/ 		}
+/******/ 		for(moduleId in moreModules) {
+/******/ 			if(Object.prototype.hasOwnProperty.call(moreModules, moduleId)) {
+/******/ 				modules[moduleId] = moreModules[moduleId];
+/******/ 			}
+/******/ 		}
+/******/ 		if(parentJsonpFunction) parentJsonpFunction(data);
+/******/
+/******/ 		while(resolves.length) {
+/******/ 			resolves.shift()();
+/******/ 		}
+/******/
+/******/ 	};
+/******/
+/******/
 /******/ 	// The module cache
 /******/ 	var installedModules = {};
+/******/
+/******/ 	// object to store loaded and loading chunks
+/******/ 	// undefined = chunk not loaded, null = chunk preloaded/prefetched
+/******/ 	// Promise = chunk loading, 0 = chunk loaded
+/******/ 	var installedChunks = {
+/******/ 		"main": 0
+/******/ 	};
+/******/
+/******/
+/******/
+/******/ 	// script path function
+/******/ 	function jsonpScriptSrc(chunkId) {
+/******/ 		return __webpack_require__.p + "" + chunkId + ".bundled.js"
+/******/ 	}
 /******/
 /******/ 	// The require function
 /******/ 	function __webpack_require__(moduleId) {
@@ -26,6 +70,67 @@
 /******/ 		return module.exports;
 /******/ 	}
 /******/
+/******/ 	// This file contains only the entry chunk.
+/******/ 	// The chunk loading function for additional chunks
+/******/ 	__webpack_require__.e = function requireEnsure(chunkId) {
+/******/ 		var promises = [];
+/******/
+/******/
+/******/ 		// JSONP chunk loading for javascript
+/******/
+/******/ 		var installedChunkData = installedChunks[chunkId];
+/******/ 		if(installedChunkData !== 0) { // 0 means "already installed".
+/******/
+/******/ 			// a Promise means "currently loading".
+/******/ 			if(installedChunkData) {
+/******/ 				promises.push(installedChunkData[2]);
+/******/ 			} else {
+/******/ 				// setup Promise in chunk cache
+/******/ 				var promise = new Promise(function(resolve, reject) {
+/******/ 					installedChunkData = installedChunks[chunkId] = [resolve, reject];
+/******/ 				});
+/******/ 				promises.push(installedChunkData[2] = promise);
+/******/
+/******/ 				// start chunk loading
+/******/ 				var script = document.createElement('script');
+/******/ 				var onScriptComplete;
+/******/
+/******/ 				script.charset = 'utf-8';
+/******/ 				script.timeout = 120;
+/******/ 				if (__webpack_require__.nc) {
+/******/ 					script.setAttribute("nonce", __webpack_require__.nc);
+/******/ 				}
+/******/ 				script.src = jsonpScriptSrc(chunkId);
+/******/
+/******/ 				// create error before stack unwound to get useful stacktrace later
+/******/ 				var error = new Error();
+/******/ 				onScriptComplete = function (event) {
+/******/ 					// avoid mem leaks in IE.
+/******/ 					script.onerror = script.onload = null;
+/******/ 					clearTimeout(timeout);
+/******/ 					var chunk = installedChunks[chunkId];
+/******/ 					if(chunk !== 0) {
+/******/ 						if(chunk) {
+/******/ 							var errorType = event && (event.type === 'load' ? 'missing' : event.type);
+/******/ 							var realSrc = event && event.target && event.target.src;
+/******/ 							error.message = 'Loading chunk ' + chunkId + ' failed.\n(' + errorType + ': ' + realSrc + ')';
+/******/ 							error.name = 'ChunkLoadError';
+/******/ 							error.type = errorType;
+/******/ 							error.request = realSrc;
+/******/ 							chunk[1](error);
+/******/ 						}
+/******/ 						installedChunks[chunkId] = undefined;
+/******/ 					}
+/******/ 				};
+/******/ 				var timeout = setTimeout(function(){
+/******/ 					onScriptComplete({ type: 'timeout', target: script });
+/******/ 				}, 120000);
+/******/ 				script.onerror = script.onload = onScriptComplete;
+/******/ 				document.head.appendChild(script);
+/******/ 			}
+/******/ 		}
+/******/ 		return Promise.all(promises);
+/******/ 	};
 /******/
 /******/ 	// expose the modules object (__webpack_modules__)
 /******/ 	__webpack_require__.m = modules;
@@ -79,6 +184,16 @@
 /******/ 	// __webpack_public_path__
 /******/ 	__webpack_require__.p = "";
 /******/
+/******/ 	// on error function for async loading
+/******/ 	__webpack_require__.oe = function(err) { console.error(err); throw err; };
+/******/
+/******/ 	var jsonpArray = window["webpackJsonp"] = window["webpackJsonp"] || [];
+/******/ 	var oldJsonpFunction = jsonpArray.push.bind(jsonpArray);
+/******/ 	jsonpArray.push = webpackJsonpCallback;
+/******/ 	jsonpArray = jsonpArray.slice();
+/******/ 	for(var i = 0; i < jsonpArray.length; i++) webpackJsonpCallback(jsonpArray[i]);
+/******/ 	var parentJsonpFunction = oldJsonpFunction;
+/******/
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = "./app/scripts/app.js");
@@ -93,7 +208,7 @@
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-eval("// Imports\nvar ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ../../../node_modules/css-loader/dist/runtime/api.js */ \"./node_modules/css-loader/dist/runtime/api.js\");\nvar ___CSS_LOADER_AT_RULE_IMPORT_0___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./normalize.css'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_1___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_variables'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_2___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_mixins'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_3___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_global'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_4___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_large-hero'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_5___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_btn'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_6___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_wrapper'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_7___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_page-section'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_8___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_headline'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_9___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_row'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_10___ = __webpack_require__(/*! -!../../../node_modules/css-loader/dist/cjs.js!./modules/_generic-content-container.css */ \"./node_modules/css-loader/dist/cjs.js!./app/assets/styles/modules/_generic-content-container.css\");\nvar ___CSS_LOADER_AT_RULE_IMPORT_11___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_section-title'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_12___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_feature-item'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_13___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_testimonial'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_14___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_site-footer'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_15___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_site-header'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_16___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_primary-nav'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_17___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_reveal-item'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nexports = ___CSS_LOADER_API_IMPORT___(false);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_0___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_1___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_2___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_3___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_4___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_5___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_6___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_7___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_8___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_9___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_10___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_11___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_12___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_13___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_14___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_15___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_16___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_17___);\n// Module\nexports.push([module.i, \"\", \"\"]);\n// Exports\nmodule.exports = exports;\n\n\n//# sourceURL=webpack:///./app/assets/styles/styles.css?");
+eval("// Imports\nvar ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ../../../node_modules/css-loader/dist/runtime/api.js */ \"./node_modules/css-loader/dist/runtime/api.js\");\nvar ___CSS_LOADER_AT_RULE_IMPORT_0___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./normalize.css'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_1___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_variables'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_2___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_mixins'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_3___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./base/_global'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_4___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_large-hero'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_5___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_btn'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_6___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_wrapper'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_7___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_page-section'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_8___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_headline'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_9___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_row'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_10___ = __webpack_require__(/*! -!../../../node_modules/css-loader/dist/cjs.js!./modules/_generic-content-container.css */ \"./node_modules/css-loader/dist/cjs.js!./app/assets/styles/modules/_generic-content-container.css\");\nvar ___CSS_LOADER_AT_RULE_IMPORT_11___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_section-title'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_12___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_feature-item'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_13___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_testimonial'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_14___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_site-footer'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_15___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_site-header'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_16___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_primary-nav'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_17___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_reveal-item'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_18___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_modal'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nvar ___CSS_LOADER_AT_RULE_IMPORT_19___ = __webpack_require__(!(function webpackMissingModule() { var e = new Error(\"Cannot find module '-!../../../node_modules/css-loader/dist/cjs.js!./modules/_social-icons'\"); e.code = 'MODULE_NOT_FOUND'; throw e; }()));\nexports = ___CSS_LOADER_API_IMPORT___(false);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_0___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_1___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_2___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_3___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_4___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_5___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_6___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_7___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_8___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_9___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_10___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_11___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_12___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_13___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_14___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_15___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_16___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_17___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_18___);\nexports.i(___CSS_LOADER_AT_RULE_IMPORT_19___);\n// Module\nexports.push([module.i, \"\", \"\"]);\n// Exports\nmodule.exports = exports;\n\n\n//# sourceURL=webpack:///./app/assets/styles/styles.css?");
 
 /***/ }),
 
@@ -105,7 +220,7 @@ eval("// Imports\nvar ___CSS_LOADER_API_IMPORT___ = __webpack_require__(/*! ../.
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./app/assets/styles/styles.css */ \"./app/assets/styles/styles.css\");\n/* harmony import */ var _Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modules/MobileMenu */ \"./app/scripts/modules/MobileMenu.js\");\n/* harmony import */ var _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/RevealOnScroll */ \"./app/scripts/modules/RevealOnScroll.js\");\n/* harmony import */ var _modules_StickyHeader__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/StickyHeader */ \"./app/scripts/modules/StickyHeader.js\");\n\n\n\n\n\nlet stickyHeader = new _modules_StickyHeader__WEBPACK_IMPORTED_MODULE_3__[\"default\"] ()\nnew _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__[\"default\"](document.querySelectorAll(\".feature-item\"), 75)\nnew _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__[\"default\"](document.querySelectorAll(\".testimonial\"), 60)\nlet mobileMenu = new _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__[\"default\"]();\n\nif (false) {}\n\n//# sourceURL=webpack:///./app/scripts/app.js?");
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./app/assets/styles/styles.css */ \"./app/assets/styles/styles.css\");\n/* harmony import */ var _Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_Users_nikhilhindocha_Desktop_project_travel_site_app_assets_styles_styles_css__WEBPACK_IMPORTED_MODULE_0__);\n/* harmony import */ var _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./modules/MobileMenu */ \"./app/scripts/modules/MobileMenu.js\");\n/* harmony import */ var _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./modules/RevealOnScroll */ \"./app/scripts/modules/RevealOnScroll.js\");\n/* harmony import */ var _modules_StickyHeader__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./modules/StickyHeader */ \"./app/scripts/modules/StickyHeader.js\");\n\n\n\n\n\n\nlet stickyHeader = new _modules_StickyHeader__WEBPACK_IMPORTED_MODULE_3__[\"default\"] ()\nnew _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__[\"default\"](document.querySelectorAll(\".feature-item\"), 75)\nnew _modules_RevealOnScroll__WEBPACK_IMPORTED_MODULE_2__[\"default\"](document.querySelectorAll(\".testimonial\"), 60)\nlet mobileMenu = new _modules_MobileMenu__WEBPACK_IMPORTED_MODULE_1__[\"default\"]();\nlet modal\n\ndocument.querySelectorAll(\".open-modal\").forEach(el => {\n    el.addEventListener(\"click\", e => {\n        e.preventDefault()\n       if (typeof modal == \"undefined\") {\n        __webpack_require__.e(/*! import() | modal */ 0).then(__webpack_require__.bind(null, /*! ./modules/Modal */ \"./app/scripts/modules/Modal.js\")).then(x => {\n            modal = new x.default()\n            setTimeout(() => modal.openTheModal(), 20)\n        }).catch(() => console.log(\"There was a problem.\"))\n       } else {\n        modal.openTheModal()\n       }\n    })\n})\n\nif (false) {}\n\n//# sourceURL=webpack:///./app/scripts/app.js?");
 
 /***/ }),
 
