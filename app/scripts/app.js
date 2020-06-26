@@ -1,4 +1,4 @@
-import '/Users/nikhilhindocha/Desktop/project/travel-site/app/assets/styles/styles.css'
+import '../assets/styles/styles.css'
 import 'lazysizes'
 import MobileMenu from './modules/MobileMenu'
 import RevealOnScroll from './modules/RevealOnScroll'
