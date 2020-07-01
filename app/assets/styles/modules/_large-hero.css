@@ -43,7 +43,6 @@
         font-weight: 100;
         color: #FFF;
         font-size: 1.1rem;
-        margin: 0.1;
         text-shadow: 2px 2px 0 rgba (0,0,0,0.1);
         max-width: 30rem;
         margin-left: auto;
@@ -54,3 +53,5 @@
         }
 }
 }
+
+// a comment
